@@ -1,0 +1,368 @@
+DROP TABLE IF EXISTS roomSales;
+IF OBJECT_ID('dbo.roomSales', 'U') IS NOT NULL DROP TABLE dbo.roomSales;
+
+DROP TABLE IF EXISTS rooms;
+IF OBJECT_ID('dbo.rooms', 'U') IS NOT NULL DROP TABLE dbo.rooms;
+
+DROP TABLE IF EXISTS roomStat;
+IF OBJECT_ID('dbo.roomStat', 'U') IS NOT NULL DROP TABLE dbo.roomStat;
+
+DROP TABLE IF EXISTS classLevel;
+IF OBJECT_ID('dbo.classLevel', 'U') IS NOT NULL DROP TABLE dbo.classLevel;
+
+DROP TABLE IF EXISTS guests;
+IF OBJECT_ID('dbo.guests', 'U') IS NOT NULL DROP TABLE dbo.guests;
+
+DROP TABLE IF EXISTS guestStatus;
+IF OBJECT_ID('dbo.guestStatus', 'U') IS NOT NULL DROP TABLE dbo.guestStatus;
+
+DROP TABLE IF EXISTS class;
+IF OBJECT_ID('dbo.class', 'U') IS NOT NULL DROP TABLE dbo.class;
+
+DROP TABLE IF EXISTS servSales;
+IF OBJECT_ID('dbo.servSales', 'U') IS NOT NULL DROP TABLE dbo.servSales;
+
+DROP TABLE IF EXISTS supSales;
+IF OBJECT_ID('dbo.supSales', 'U') IS NOT NULL DROP TABLE dbo.supSales;
+
+
+DROP TABLE IF EXISTS services;
+IF OBJECT_ID('dbo.services', 'U') IS NOT NULL DROP TABLE dbo.services;
+
+DROP TABLE IF EXISTS servStatus;
+IF OBJECT_ID('dbo.servStatus', 'U') IS NOT NULL DROP TABLE dbo.servStatus;
+
+
+DROP TABLE IF EXISTS supplies;
+IF OBJECT_ID('dbo.supplies', 'U') IS NOT NULL DROP TABLE dbo.supplies;
+
+DROP TABLE IF EXISTS taverns;
+IF OBJECT_ID('dbo.taverns', 'U') IS NOT NULL DROP TABLE dbo.taverns;
+
+DROP TABLE IF EXISTS owners;
+IF OBJECT_ID('dbo.owners', 'U') IS NOT NULL DROP TABLE dbo.owners;
+
+DROP TABLE IF EXISTS roles;
+IF OBJECT_ID('dbo.roles', 'U') IS NOT NULL DROP TABLE dbo.roles;
+
+DROP TABLE IF EXISTS locations;
+IF OBJECT_ID('dbo.locations', 'U') IS NOT NULL DROP TABLE dbo.locations;
+
+go
+
+CREATE TABLE locations (
+  locationID INT IDENTITY(1,1),
+  locationName VARCHAR(50),
+  PRIMARY KEY (locationID)
+);
+
+CREATE TABLE roles (
+  roleID INT IDENTITY(1,1),
+  roleName VARCHAR(50),
+  roleDescription VARCHAR(200),
+  PRIMARY KEY (roleID)
+);
+
+
+CREATE TABLE owners (
+  ownerID INT IDENTITY(1,1),
+  ownerName VARCHAR(50),
+  roleID INT,
+  PRIMARY KEY (ownerID)
+);
+
+ALTER TABLE owners ADD FOREIGN KEY (roleID) REFERENCES roles(roleID);
+
+CREATE TABLE taverns (
+  tavernID INT IDENTITY(1,1),
+  tavernName VARCHAR(50),
+  locationID INT,
+  floors INT,
+  ownerID INT,
+  PRIMARY KEY (tavernID)
+);
+
+ALTER TABLE taverns ADD FOREIGN KEY (locationID) REFERENCES locations(locationID);
+ALTER TABLE taverns ADD FOREIGN KEY (ownerID) REFERENCES owners(ownerID);
+
+
+CREATE TABLE supplies (
+  supplyID INT IDENTITY(1,1),
+  itemName VARCHAR(50),
+  unit VARCHAR(3),
+  dateUpdated DATE,
+  currentAmount INT,
+  tavernID INT,
+  PRIMARY KEY (supplyID)
+);
+
+ALTER TABLE supplies ADD FOREIGN KEY (tavernID) REFERENCES taverns(tavernID);
+
+CREATE TABLE servStatus (
+  statusID INT IDENTITY(1,1),
+  statusName VARCHAR(50),
+  PRIMARY KEY (statusID)
+);
+
+CREATE TABLE services (
+  serviceID INT IDENTITY(1,1),
+  serviceName VARCHAR(50),
+  statusID INT,
+  tavernID INT,
+  PRIMARY KEY (serviceID)
+);
+
+ALTER TABLE services ADD FOREIGN KEY (statusID) REFERENCES servStatus(statusID);
+ALTER TABLE services ADD FOREIGN KEY (tavernID) REFERENCES taverns(tavernID);
+
+CREATE TABLE guestStatus (
+  statusID INT IDENTITY(1,1),
+  statusName VARCHAR(250),
+  PRIMARY KEY(statusID)
+);
+
+CREATE TABLE guests (
+  guestID INT IDENTITY(1,1),
+  names VARCHAR(25),
+  notes VARCHAR(250),
+  cakeday DATE,
+  statusID INT,
+  PRIMARY KEY (guestID),
+  FOREIGN KEY (statusID) REFERENCES guestStatus(statusID)  
+);
+
+
+CREATE TABLE servSales (
+ servSalesID INT IDENTITY(1,1),
+ guestID INT,
+ serviceID INT,
+ servPrice DECIMAL(6,2),
+ datePurchased DATE,
+ amountServ INT,
+ tavernID INT,
+ PRIMARY KEY (servSalesID) 
+);
+
+ALTER TABLE servSales ADD FOREIGN KEY (guestID) REFERENCES guests(guestID);
+ALTER TABLE servSales ADD FOREIGN KEY (serviceID) REFERENCES services(serviceID);
+ALTER TABLE servSales ADD FOREIGN KEY (tavernID) REFERENCES taverns(tavernID);
+
+CREATE TABLE supSales (
+ supSalesID INT IDENTITY(1,1),
+ guestID INT,
+ supplyID INT,
+ supPrice DECIMAL(6,2),
+ datePurchased DATE,
+ amountSup INT,
+ tavernID INT,
+ PRIMARY KEY (supSalesID) 
+);
+
+ALTER TABLE supSales ADD FOREIGN KEY (guestID) REFERENCES guests(guestID);
+ALTER TABLE supSales ADD FOREIGN KEY (tavernID) REFERENCES taverns(tavernID);
+ALTER TABLE supSales ADD FOREIGN KEY (supplyID) REFERENCES supplies(supplyID);
+
+CREATE TABLE class (
+  classID INT IDENTITY(1,1),
+  className VARCHAR(200),
+  PRIMARY KEY (classID)
+
+);
+
+CREATE TABLE classLevel (
+  levelNumber INT,
+  classID INT FOREIGN KEY REFERENCES class(classID), 
+  guestID INT,
+  PRIMARY KEY (classID, guestID),
+  FOREIGN KEY (guestID) REFERENCES guests(guestID)
+);
+
+
+
+CREATE TABLE roomStat (
+      roomStatusID INT IDENTITY(1,1) PRIMARY KEY,
+      rmStatusName VARCHAR(50),
+);
+
+CREATE TABLE rooms (
+      roomID INT IDENTITY(1,1) PRIMARY KEY,
+      roomStatusID INT,
+      tavernID INT,
+      FOREIGN KEY (roomStatusID) REFERENCES roomStat(roomStatusID),
+      FOREIGN KEY (tavernID) REFERENCES taverns(tavernID)
+);
+
+CREATE TABLE roomSales (
+      rmSalesID INT IDENTITY(1,1) PRIMARY KEY,
+      guestID INT,
+      roomID INT,
+      dateStayed DATE,
+      rate DECIMAL(6,2),
+      FOREIGN KEY (guestID) REFERENCES guests(guestID),
+      FOREIGN KEY (roomID) REFERENCES rooms(roomID)
+);
+
+
+-- seeding data 
+
+INSERT INTO locations (locationName)
+VALUES
+	('redwig'),
+	('harlem'),
+	('namek'),
+	('earth'),
+	('theNest');
+
+INSERT INTO roles (roleName, roleDescription)
+VALUES
+	('nord', 'pretty much just a human'),
+	('argonian', 'a lizard human'),
+	('giant', 'a large human'),
+	('Elf', 'human like race gifted in magic'),
+	('dwarf', 'short but noble human');
+
+INSERT INTO owners (ownerName, roleID)
+VALUES
+	('carl', 2),
+	('Don', 4),
+	('Jay', 4),
+	('Bird', 1),
+	('Ryan', 5);
+
+INSERT INTO taverns (tavernName, locationID, floors, ownerID)
+VALUES
+	('chinos', 3, 4, 1),
+	('brokenRock', 5, 2, 2),
+	('sweetPeas', 2, 1, 3),
+	('the laravel', 3, 1, 4),
+	('bens', 2, 3, 5);
+
+INSERT INTO supplies (itemName, unit, dateUpdated, currentAmount, tavernID)
+VALUES
+	('mead', 'oz', GETDATE(), 10, 4),
+	('mutton', 'lb', GETDATE(), 15, 3),
+	('wine', 'oz', GETDATE(), 10, 2),
+	('lamb', 'lb', GETDATE(), 20, 5),
+	('chicken', 'lb', GETDATE(), 15, 1);
+
+INSERT INTO servStatus(statusName)
+VALUES
+	('inactive'),
+	('active'),
+	('discontinued'),
+	('coming soon'),
+	('new');
+
+INSERT INTO services (serviceName, statusID, tavernID)
+VALUES
+	('Sword Sharpening', 1, 4),
+	('wizadry', 3, 5),
+	('alchemy', 3, 2),
+	('weapon training', 2, 3),
+	('enchanting', 4, 2);
+
+INSERT INTO guestStatus (statusName)
+VALUES
+	('crital condition'),
+	('full health'),
+	('poisoned'),
+	('paralyzed'),
+	('asleep');
+
+INSERT INTO guests (names, notes, cakeday, statusID)
+VALUES
+	('diaire', 'he is d1 darkness', '1994-05-13', 1),
+	('joe', 'hes not from around here', '1997-06-23', 5),
+	('Larry', '#livingLikeLarry', '1997-07-29', 2),
+	('colin', 'the dad friend', '1997-01-26', 3),
+	('sally', 'sally is the girl', '1993-04-13', 3);
+
+INSERT INTO servSales (guestID, serviceID, servPrice, datePurchased, amountServ, tavernID)
+VALUES
+	(3, 2, 25.50, GETDATE(), 5, 4),
+	(1, 1, 300.00, GETDATE(), 1, 5),
+	(3, 2, 250.99, GETDATE(), 9, 1),
+	(5, 4, 57.93, GETDATE(), 5, 3),
+	(5, 5, 76.93, GETDATE(), 7, 4);
+
+INSERT INTO supSales (guestID, supplyID, supPrice, datePurchased, amountSup, tavernID)
+VALUES
+	(4, 4, 200.00, GETDATE(), 6, 3),
+	(2, 3, 175.72, GETDATE(), 9, 3),
+	(1, 5, 133.76, GETDATE(), 5, 2),
+	(5, 2, 55.30, GETDATE(), 13, 4),
+	(3, 1, 45.20, GETDATE(), 7, 1);
+	
+INSERT INTO class (className)
+VALUES
+	('Warrior'),
+	('Dragon'),
+	('White mage'),
+	('Dark mage'),
+	('swordsman');
+
+INSERT INTO classLevel (levelNumber, classID, guestID)
+VALUES
+	(50, 3, 3),
+	(27, 4, 1),
+	(33, 2, 5),
+	(100, 1, 4),
+	(76, 3, 5);
+
+INSERT INTO roomStat (rmStatusName)
+VALUES
+	('reserved'),
+	('taken'),
+	('vacant'),
+	('under renovation'),
+	('missing');
+
+INSERT INTO rooms (roomStatusID, tavernID)
+VALUES
+	(1,4),
+	(3,5),
+	(2,3),
+	(1,5),
+	(3,4);
+
+INSERT INTO roomSales (guestID, roomID, dateStayed, rate)
+VALUES
+	(3, 2, GETDATE(), 500.00),
+	(4, 1, GETDATE(), 350.00),
+	(5, 4, GETDATE(), 200.00),
+	(1, 3, GETDATE(), 400.00),
+	(4, 2, GETDATE(), 275.00);
+
+  
+
+  SELECT * FROM guests WHERE cakeday < '2000-01-01';
+
+SELECT * FROM roomSales WHERE rate > 500;
+
+SELECT DISTINCT names FROM guests;
+
+SELECT * FROM guests ORDER BY names;
+
+SELECT * FROM supSales UNION SELECT * FROM servSales ORDER BY supPrice DESC;
+
+SELECT table_name, column_name FROM INFORMATION_SCHEMA.COLUMNS WHERE (column_name LIKE '%ID') 
+ORDER BY table_name;
+
+SELECT classID, levelNumber, guestID,
+CASE 
+WHEN levelNumber BETWEEN 1 AND 10 THEN '1-10'
+WHEN levelNumber BETWEEN 11 AND 20 THEN '10-20'
+WHEN levelNumber BETWEEN 21 AND 30 THEN '20-30'
+WHEN levelNumber BETWEEN 31 AND 40 THEN '30-40'
+WHEN levelNumber BETWEEN 41 AND 50 THEN '40-50'
+WHEN levelNumber BETWEEN 51 AND 60 THEN '50-60'
+WHEN levelNumber BETWEEN 61 AND 70 THEN '60-70'
+WHEN levelNumber BETWEEN 71 AND 80 THEN '70-80'
+WHEN levelNumber BETWEEN 81 AND 90 THEN '80-90'
+WHEN levelNumber BETWEEN 91 AND 100 THEN '90-100'
+ELSE 'no level'
+END AS levelRange FROM classLevel;
+
+SELECT CONCAT ('INSERT INTO ', table_name, '(roleName, roleDescription)') as queryPiece FROM INFORMATION_SCHEMA.TABLES
+WHERE table_name = 'roles' UNION ALL 
+SELECT CONCAT ('VALUES (', (SELECT className FROM class WHERE classID = 1), ')');
